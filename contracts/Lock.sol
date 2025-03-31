@@ -15,6 +15,10 @@ contract Lock {
     event TokenLocked(address indexed user, uint amount, uint unlockTime);
     event TokenUnlocked(address indexed user, uint amount);
 
+    function getLockInfo() public view returns (LockInfo memory) {
+        return lockMap[msg.sender];
+    }
+
     function lockTokens(uint _minutes) public payable {
         require(_minutes > 0, "Lock period must be greater than 0 minutes");
         require(msg.value > 0, "Must lock some tokens");
