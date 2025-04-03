@@ -11,11 +11,14 @@ describe("Lock", function () {
     const [owner, otherAccount] = await ethers.getSigners();
     const Lock = await ethers.getContractFactory("Lock");
     const lock = await Lock.deploy();
+
+    const Attacker = await ethers.getContractFactory("Attacker");
+    const attacker = await Attacker.deploy(lock.target);
     
     const ONE_GWEI = 1_000_000_000;
     const lockAmount = ONE_GWEI;
 
-    return { lock, owner, otherAccount, lockAmount };
+    return { lock, owner, otherAccount, lockAmount, attacker };
   }
 
   describe("GetLockInfo", function () {
@@ -47,7 +50,7 @@ describe("Lock", function () {
       const lockMinutes = 1;
       await expect(lock.connect(owner).lockTokens(lockMinutes, { value: lockAmount }))
         .to.emit(lock, "TokenLocked")
-        .withArgs(owner.address, 1, lockAmount, anyValue);
+        .withArgs(owner.address, 0, lockAmount, anyValue);
 
       // Check contract balance
       expect(await ethers.provider.getBalance(lock.target)).to.equal(lockAmount);
@@ -78,7 +81,9 @@ describe("Lock", function () {
       const { lock, owner, lockAmount } = await loadFixture(deployLockFixture);
       
       // Lock tokens for 1 minute
-      await lock.connect(owner).lockTokens(1, { value: lockAmount });
+      await expect(lock.connect(owner).lockTokens(1, { value: lockAmount }))
+        .to.emit(lock, "TokenLocked")
+        .withArgs(owner.address, 0, lockAmount, anyValue);
       
       // Increase time by 1 minute
       await time.increase(1 * 60);
@@ -90,12 +95,8 @@ describe("Lock", function () {
 
       // Verify contract balance is 0
       expect(await ethers.provider.getBalance(lock.target)).to.equal(0);
-      
-      // Verify lock info is cleared
       const lockInfo = await lock.getLockInfo(0);
-      expect(lockInfo.amount).to.equal(0);
-      expect(lockInfo.unlockTime).to.equal(0);
-      expect(lockInfo.user).to.equal(ethers.ZeroAddress);
+      expect(lockInfo.isUnlocked).to.equal(true);
     });
 
     it("Should transfer correct amount back to user", async function () {
@@ -167,10 +168,8 @@ describe("Lock", function () {
       // Verify both users' lock info is cleared
       ownerLock = await lock.getLockInfo(0);
       otherLock = await lock.getLockInfo(1);
-      expect(ownerLock.amount).to.equal(0);
-      expect(otherLock.amount).to.equal(0);
-      expect(ownerLock.user).to.equal(ethers.ZeroAddress);
-      expect(otherLock.user).to.equal(ethers.ZeroAddress);
+      expect(ownerLock.isUnlocked).to.equal(true);
+      expect(otherLock.isUnlocked).to.equal(true);
     });
   });
 
@@ -189,7 +188,7 @@ describe("Lock", function () {
       
       await expect(lock.lockTokens(1, { value: largeAmount }))
         .to.emit(lock, "TokenLocked")
-        .withArgs(anyValue, 1, largeAmount, anyValue);
+        .withArgs(anyValue, 0, largeAmount, anyValue);
       
       const lockInfo = await lock.getLockInfo(0);
       expect(lockInfo.amount).to.equal(largeAmount);
@@ -212,6 +211,27 @@ describe("Lock", function () {
       expect(lock2.amount).to.equal(lockAmount);
       expect(lock1.user).to.equal(owner.address);
       expect(lock2.user).to.equal(owner.address);
+    });
+  });
+
+  describe("Attacker", function () {
+    it("Should lock tokens for attacker", async function () {
+      const { lock, attacker, lockAmount, owner } = await loadFixture(deployLockFixture);
+      
+      await lock.lockTokens(1, { value: lockAmount });
+      await lock.lockTokens(1, { value: lockAmount });
+      await lock.lockTokens(1, { value: lockAmount });
+      await lock.lockTokens(1, { value: lockAmount });
+
+
+      expect(await ethers.provider.getBalance(await attacker.getAddress())).to.equal(0);
+      await attacker.connect(owner).lockTokens(1, {value: lockAmount });
+      // Increase time by 1 minute
+      await time.increase(1 * 60);
+
+      await attacker.connect(owner).unlock(4, lockAmount);
+
+      expect(await ethers.provider.getBalance(await attacker.getAddress())).to.equal(lockAmount);
     });
   });
 });

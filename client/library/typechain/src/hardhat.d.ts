@@ -14,6 +14,14 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
+      name: "Attacker",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Attacker__factory>;
+    getContractFactory(
+      name: "ILock",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ILock__factory>;
+    getContractFactory(
       name: "Lock",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Lock__factory>;
@@ -23,6 +31,16 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.Lottery__factory>;
 
     getContractAt(
+      name: "Attacker",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Attacker>;
+    getContractAt(
+      name: "ILock",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ILock>;
+    getContractAt(
       name: "Lock",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -34,6 +52,14 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.Lottery>;
 
     deployContract(
+      name: "Attacker",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Attacker>;
+    deployContract(
+      name: "ILock",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ILock>;
+    deployContract(
       name: "Lock",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Lock>;
@@ -42,6 +68,16 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Lottery>;
 
+    deployContract(
+      name: "Attacker",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Attacker>;
+    deployContract(
+      name: "ILock",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ILock>;
     deployContract(
       name: "Lock",
       args: any[],
