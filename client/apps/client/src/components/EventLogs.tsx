@@ -2,9 +2,11 @@ import { formatEther } from 'viem'
 import { useContractEvents } from '../hooks/useContractEvents'
 import { formatAddress } from '../util/util'
 import { useMutateUnlockTokens } from '../hooks/useLock'
+import { useAccount } from 'wagmi'
 
 export function EventLogs() {
   const { events, isLoading, error, refetch } = useContractEvents()
+  const { address } = useAccount()
 
   const { handleUnlock } = useMutateUnlockTokens(
     () => {
@@ -73,9 +75,9 @@ export function EventLogs() {
                     BigInt(Math.floor(Date.now() / 1000)) >= event.unlockTime ? (
                       <button
                         onClick={() => onUnlock(+event.id - 1)}
-                        disabled={false}
+                        disabled={!address || address.toLowerCase() !== event.user.toLowerCase()}
                         className="btn-xs p-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-                        title="Unlock"
+                        title={!address ? "Connect wallet to unlock" : address.toLowerCase() !== event.user.toLowerCase() ? "Only the token owner can unlock" : "Unlock"}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />

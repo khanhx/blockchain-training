@@ -1,14 +1,14 @@
 import { formatEther } from 'viem'
-import { useAccount, useBalance, useChainId, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useBalance, useChainId, useDisconnect } from 'wagmi'
 import { sepolia } from 'wagmi/chains'
-import { metaMask } from 'wagmi/connectors'
+import { useWeb3Modal } from '@web3modal/wagmi/react'
 
 export function WalletConnect() {
   const { address, isConnected } = useAccount()
-  const { connect } = useConnect()
   const { disconnect } = useDisconnect()
   const { data: balance } = useBalance({ address })
   const chainId = useChainId()
+  const { open } = useWeb3Modal()
 
   if (isConnected) {
     if (chainId !== sepolia.id) {
@@ -47,7 +47,7 @@ export function WalletConnect() {
 
   return (
     <button
-      onClick={() => connect({ connector: metaMask() })}
+      onClick={() => open()}
       className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
     >
       Connect Wallet

@@ -1,18 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createConfig, http, WagmiProvider } from 'wagmi'
-import { sepolia } from 'wagmi/chains'
-import { injected } from 'wagmi/connectors'
+import { WagmiProvider } from 'wagmi'
 import { EventLogs } from '../components/EventLogs'
 import { LockInfo } from '../components/LockInfo'
 import { WalletConnect } from '../components/WalletConnect'
-import { RPC_URL } from '../util/rpc'
-const config = createConfig({
-  chains: [sepolia],
-  connectors: [injected()],
-  transports: {
-    [sepolia.id]: http(RPC_URL),
-  },
-})
+import { config } from '../config/wagmi'
 
 const queryClient = new QueryClient()
 
@@ -44,7 +35,6 @@ function AppContent() {
 
 export function App() {
   return (
-    // @ts-expect-error - WagmiProvider type issue
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <AppContent />
