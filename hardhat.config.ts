@@ -4,6 +4,8 @@ import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-ethers";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import '@openzeppelin/hardhat-upgrades';
+
 import * as dotenv from "dotenv";
 
 dotenv.config();
