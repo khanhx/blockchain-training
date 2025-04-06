@@ -18,6 +18,26 @@ describe("Lock", function () {
     return { lock, owner, otherAccount, lockAmount };
   }
 
+  describe("GetLockInfo", function () {
+    it("Should return empty lock info for new user", async function () {
+      const { lock, owner } = await loadFixture(deployLockFixture);
+      
+      const lockInfo = await lock.getLockInfo();
+      expect(lockInfo.amount).to.equal(0);
+      expect(lockInfo.unlockTime).to.equal(0);
+    });
+
+    it("Should return correct lock info after locking", async function () {
+      const { lock, owner, lockAmount } = await loadFixture(deployLockFixture);
+      
+      await lock.connect(owner).lockTokens(1, { value: lockAmount });
+      
+      const lockInfo = await lock.getLockInfo();
+      expect(lockInfo.amount).to.equal(lockAmount);
+      expect(lockInfo.unlockTime).to.be.gt(0);
+    });
+  });
+
   describe("LockTokens", function () {
     it("Should lock tokens for specified minutes", async function () {
       const { lock, owner, lockAmount } = await loadFixture(deployLockFixture);
@@ -29,6 +49,10 @@ describe("Lock", function () {
 
       // Check contract balance
       expect(await ethers.provider.getBalance(lock.target)).to.equal(lockAmount);
+      
+      // Verify lock info
+      const lockInfo = await lock.getLockInfo();
+      expect(lockInfo.amount).to.equal(lockAmount);
     });
 
     it("Should revert if lock period is 0", async function () {
@@ -71,6 +95,11 @@ describe("Lock", function () {
 
       // Verify contract balance is 0
       expect(await ethers.provider.getBalance(lock.target)).to.equal(0);
+      
+      // Verify lock info is cleared
+      const lockInfo = await lock.getLockInfo();
+      expect(lockInfo.amount).to.equal(0);
+      expect(lockInfo.unlockTime).to.equal(0);
     });
 
     it("Should transfer correct amount back to user", async function () {
@@ -115,6 +144,12 @@ describe("Lock", function () {
       await lock.connect(owner).lockTokens(1, { value: lockAmount });
       await lock.connect(otherAccount).lockTokens(2, { value: lockAmount });
       
+      // Verify each user's lock info
+      let ownerLock = await lock.connect(owner).getLockInfo();
+      let otherLock = await lock.connect(otherAccount).getLockInfo();
+      expect(ownerLock.amount).to.equal(lockAmount);
+      expect(otherLock.amount).to.equal(lockAmount);
+      
       // Increase time by 1 minute
       await time.increase(1 * 60);
       
@@ -130,6 +165,12 @@ describe("Lock", function () {
       
       // Second user can now unlock
       await expect(lock.connect(otherAccount).unlock()).to.not.be.reverted;
+      
+      // Verify both users' lock info is cleared
+      ownerLock = await lock.connect(owner).getLockInfo();
+      otherLock = await lock.connect(otherAccount).getLockInfo();
+      expect(ownerLock.amount).to.equal(0);
+      expect(otherLock.amount).to.equal(0);
     });
   });
 
@@ -149,6 +190,9 @@ describe("Lock", function () {
       await expect(lock.lockTokens(1, { value: largeAmount }))
         .to.emit(lock, "TokenLocked")
         .withArgs(anyValue, largeAmount, anyValue);
+      
+      const lockInfo = await lock.getLockInfo();
+      expect(lockInfo.amount).to.equal(largeAmount);
     });
   });
 });
