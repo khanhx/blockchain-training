@@ -9,6 +9,6 @@
     "resolveJsonModule": true,
     "types": ["node", "mocha", "chai"]
   },
-  "include": ["./scripts", "./test", "./typechain-types", "./ignition"],
+  "include": ["./scripts", "./test", "./typechain-types", "./ignition", "./client/library/typechain"],
   "files": ["./hardhat.config.ts"]
 }

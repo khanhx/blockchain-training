@@ -46,7 +46,7 @@ const config: HardhatUserConfig = {
     artifacts: "./artifacts",
   },
   typechain: {
-    outDir: 'typechain-types',
+    outDir: 'client/library/typechain/src',
     target: 'ethers-v6',
   },
 };
