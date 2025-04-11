@@ -3,7 +3,10 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers";
-import type { ILock, ILockInterface } from "../../Attacker.sol/ILock";
+import type {
+  ILock,
+  ILockInterface,
+} from "../../../contracts/Attacker.sol/ILock";
 
 const _abi = [
   {

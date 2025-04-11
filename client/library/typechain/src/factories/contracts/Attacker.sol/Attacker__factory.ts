@@ -13,8 +13,11 @@ import type {
   ContractDeployTransaction,
   ContractRunner,
 } from "ethers";
-import type { NonPayableOverrides } from "../../common";
-import type { Attacker, AttackerInterface } from "../../Attacker.sol/Attacker";
+import type { NonPayableOverrides } from "../../../common";
+import type {
+  Attacker,
+  AttackerInterface,
+} from "../../../contracts/Attacker.sol/Attacker";
 
 const _abi = [
   {

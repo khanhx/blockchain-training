@@ -14,8 +14,8 @@ import type {
   ContractDeployTransaction,
   ContractRunner,
 } from "ethers";
-import type { NonPayableOverrides } from "../common";
-import type { Lottery, LotteryInterface } from "../Lottery";
+import type { NonPayableOverrides } from "../../common";
+import type { Lottery, LotteryInterface } from "../../contracts/Lottery";
 
 const _abi = [
   {
