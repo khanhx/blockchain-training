@@ -65,8 +65,8 @@ contract Lock {
         require(userLock.user == msg.sender, "You are not the owner of this lock");
         require(userLock.isUnlocked == false, "Tokens are already unlocked");
 
-        userLock.isUnlocked = true;
         transfer(userLock.tokenAddress, msg.sender, userLock.amount);
+        userLock.isUnlocked = true;
         
         emit TokenUnlocked(msg.sender, id, userLock.amount);
     }

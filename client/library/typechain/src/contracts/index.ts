@@ -5,5 +5,7 @@ import type * as attackerSol from "./Attacker.sol";
 export type { attackerSol };
 import type * as erc20Sol from "./Erc20.sol";
 export type { erc20Sol };
+export type { ERC20Mock } from "./ERC20Mock";
 export type { Lock } from "./Lock";
 export type { Lottery } from "./Lottery";
+export type { MultisigWallet } from "./MultisigWallet";

@@ -3,5 +3,7 @@
 /* eslint-disable */
 export * as attackerSol from "./Attacker.sol";
 export * as erc20Sol from "./Erc20.sol";
+export { ERC20Mock__factory } from "./ERC20Mock__factory";
 export { Lock__factory } from "./Lock__factory";
 export { Lottery__factory } from "./Lottery__factory";
+export { MultisigWallet__factory } from "./MultisigWallet__factory";
