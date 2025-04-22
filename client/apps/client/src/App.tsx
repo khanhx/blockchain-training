@@ -1,26 +1,38 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { WalletPage } from './pages/WalletPage';
+
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { WalletConnectProvider } from './config/walletconnect';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 minute
-      gcTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: Infinity
     },
   },
-});
+})
+
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+})
+
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-        <Router>
-          <Routes>
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="*" element={<Navigate to="/wallet" replace />} />
-          </Routes>
-        </Router>
-    </QueryClientProvider>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister }}
+    >
+      <WalletConnectProvider />
+      <Router>
+        <Routes>
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="*" element={<Navigate to="/wallet" replace />} />
+        </Routes>
+      </Router>
+    </PersistQueryClientProvider>
   );
 }
 

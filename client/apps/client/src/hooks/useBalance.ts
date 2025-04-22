@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { TokenBalance, useWalletState } from "../contexts/state";
+import { TokenBalance, TokenInfo, useWalletState } from "../contexts/state";
+import { ethers, ZeroAddress } from "ethers";
+import { getErc20Contract } from "../util/erc20";
 
 export const useNativeBalance = () => {
   const { address, provider, isUnlocked } = useWalletState()
@@ -10,7 +12,13 @@ export const useNativeBalance = () => {
       if (!provider) {
         throw new Error('Provider not found');
       }
+      const balance = await provider.getBalance(address)
       return {
+        address: ZeroAddress,
+        symbol: 'ETH',
+        name: 'Ether',
+        decimals: 18,
+        balance: ethers.formatEther(balance)
       } as TokenBalance
     },
     enabled: !!address && !!provider,
@@ -26,7 +34,18 @@ export const useTokenBalances = () => {
   const tokenBalances = useQuery({
     queryKey: ['tokenBalances', address, provider],
     queryFn: async () => {
-      return []
+      return Promise.all(importedToken.map(async (token) => {
+        if (!provider) return {
+          ...token,
+          balance: '0'
+        }
+        const contract = getErc20Contract(token.address, provider)
+        const balance = await contract.balanceOf(address)
+        return {
+          ...token,
+          balance: ethers.formatUnits(balance, token.decimals)
+        }
+      }))
     },
     enabled: !!address && !!provider && !!importedToken,
     gcTime: 30_000
@@ -41,7 +60,7 @@ export const useBalances = () => {
 
   return {
     nativeBalance: nativeBalance.data,
-    data: [nativeBalance.data, ...(tokenBalances.data || [])] as TokenBalance[],
+    data: [nativeBalance.data, ...(tokenBalances.data || [])].filter(Boolean) as TokenBalance[],
     isLoading: nativeBalance.isLoading || tokenBalances.isLoading,
     isError: nativeBalance.isError || tokenBalances.isError,
     error: nativeBalance.error || tokenBalances.error

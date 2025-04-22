@@ -1,32 +1,39 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ActivityList } from '../components/ActivityList';
 import { ReceiveModal } from '../components/ReceiveModal';
 import { SendTokenModal } from '../components/SendTokenModal';
-import { ImportTokenModal } from '../components/ImportTokenModal';
+import { TokenList } from '../components/TokenList';
+import { URIConnectModal } from '../components/URIConnectModal';
+import {  useWalletConnect } from '../config/walletconnect';
 import { NETWORKS } from '../constants/networks';
-import { useWallet } from '../hooks/useWallet';
 import { useBalances } from '../hooks/useBalance';
+import { useWallet } from '../hooks/useWallet';
+
+type Tab = 'tokens' | 'activity';
 
 export function WalletPage() {
   const {
     address,
     isUnlocked,
-    network,
-    importWallet,
     unlockWallet,
-    switchNetwork
+    importWallet,
+    network,
+    switchNetwork,
+    provider,
   } = useWallet();
-
+  const { walletKit } = useWalletConnect()
   const { data, nativeBalance } = useBalances();
-
-  const [showImport, setShowImport] = useState(false);
-  const [showNetworkMenu, setShowNetworkMenu] = useState(false);
+  console.log("🚀 ~ WalletPage ~ data:", data)
+  const [activeTab, setActiveTab] = useState<Tab>('tokens');
   const [showSendModal, setShowSendModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [showNetworkMenu, setShowNetworkMenu] = useState(false);
   const [privateKey, setPrivateKey] = useState('');
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [isCopied, setIsCopied] = useState(false);
-  const [showImportTokenModal, setShowImportTokenModal] = useState(false);
+  const [showURIModal, setShowURIModal] = useState(false);
 
   const handleImport = async () => {
     try {
@@ -41,6 +48,7 @@ export function WalletPage() {
   };
 
   const handleUnlock = async () => {
+    console.log("🚀 ~ handleUnlock ~ passcode:", passcode)
     await unlockWallet(passcode);
   };
 
@@ -63,7 +71,19 @@ export function WalletPage() {
     }
   };
 
-  if (isUnlocked) {
+  const handleURIConnect = (uri: string) => {
+    console.log('Connecting to URI:', uri);
+    walletKit?.pair({
+      uri,
+      activatePairing: true
+    }).then(() => {
+      console.log('Pairing activated');
+    }).catch((err) => {
+      console.error('Failed to pair:', err);
+    });
+  };
+
+  if (!isUnlocked) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
         {!showImport ? (
@@ -148,9 +168,8 @@ export function WalletPage() {
                         <button
                           key={net.chainId}
                           onClick={() => handleNetworkSwitch(net.chainId)}
-                          className={`w-full text-left px-3 py-2 rounded hover:bg-gray-700 ${
-                            net.chainId === network.chainId ? 'bg-gray-700' : ''
-                          }`}
+                          className={`w-full text-left px-3 py-2 rounded hover:bg-gray-700 ${net.chainId === network.chainId ? 'bg-gray-700' : ''
+                            }`}
                         >
                           {net.name}
                         </button>
@@ -185,42 +204,37 @@ export function WalletPage() {
               >
                 Receive
               </button>
+              <button
+                onClick={() => setShowURIModal(true)}
+                className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Connect URI
+              </button>
             </div>
           </div>
         </div>
 
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex gap-8 mb-6">
-            <button className="text-blue-400 border-b-2 border-blue-400 pb-2">
+            <button
+              onClick={() => setActiveTab('tokens')}
+              className={`pb-2 ${activeTab === 'tokens' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+            >
               Tokens
             </button>
-            <button className="text-gray-400 pb-2">
+            <button
+              onClick={() => setActiveTab('activity')}
+              className={`pb-2 ${activeTab === 'activity' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+            >
               Activity
             </button>
           </div>
 
-          <div className="space-y-4">
-            {data.filter(Boolean).map((token) => (
-              <div key={token?.address} className="flex items-center justify-between p-2 hover:bg-gray-700 rounded">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
-                  <div>
-                    <p className="font-medium">{token?.symbol}</p>
-                    <p className="text-sm text-gray-400">{token?.balance}</p>
-                  </div>
-                </div>
-                <p className="font-medium">{token?.balance} {token?.symbol}</p>
-              </div>
-            ))}
-
-            <button
-              onClick={() => setShowImportTokenModal(true)}
-              className="w-full mt-4 py-3 text-sm text-blue-400 border border-blue-400/30 rounded-lg hover:bg-blue-400/10 transition-colors flex items-center justify-center gap-2"
-            >
-              <span className="material-icons-outlined text-sm">add_circle_outline</span>
-              Import Token
-            </button>
-          </div>
+          {activeTab === 'tokens' ? (
+            <TokenList tokens={data || []} />
+          ) : (
+            <ActivityList />
+          )}
         </div>
       </div>
 
@@ -235,9 +249,10 @@ export function WalletPage() {
         address={address || ''}
       />
 
-      <ImportTokenModal
-        isOpen={showImportTokenModal}
-        onClose={() => setShowImportTokenModal(false)}
+      <URIConnectModal
+        isOpen={showURIModal}
+        onClose={() => setShowURIModal(false)}
+        onConnect={handleURIConnect}
       />
     </div>
   );

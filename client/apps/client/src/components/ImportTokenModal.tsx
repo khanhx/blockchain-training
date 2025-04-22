@@ -1,5 +1,7 @@
 import { Dialog } from '@headlessui/react';
 import { useState } from 'react';
+import { useWalletState } from '../contexts/state';
+import { getErc20Contract } from '../util/erc20';
 
 interface ImportTokenModalProps {
   isOpen: boolean;
@@ -8,8 +10,23 @@ interface ImportTokenModalProps {
 
 export function ImportTokenModal({ isOpen, onClose }: ImportTokenModalProps) {
   const [address, setAddress] = useState('');
+  const { importedToken, set, provider } = useWalletState()
 
   const handleImport = async () => {
+    if (!provider) return
+    const contract = getErc20Contract(address, provider)
+    const [name, symbol, decimals] = await Promise.all([
+      contract.name(),
+      contract.symbol(),
+      contract.decimals()
+    ])
+    const tokenInfo = {
+      address,
+      name,
+      symbol,
+      decimals: Number(decimals)
+    }
+    set({ importedToken: [...importedToken, tokenInfo] })
   };
 
   return (
