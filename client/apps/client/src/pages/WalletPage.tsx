@@ -5,6 +5,9 @@ import { ImportTokenModal } from '../components/ImportTokenModal';
 import { NETWORKS } from '../constants/networks';
 import { useWallet } from '../hooks/useWallet';
 import { useBalances } from '../hooks/useBalance';
+import { Activity } from '../components/Activity';
+
+type Tab = 'tokens' | 'activity';
 
 export function WalletPage() {
   const {
@@ -17,6 +20,7 @@ export function WalletPage() {
   } = useWallet();
 
   const { data, nativeBalance } = useBalances();
+  const [activeTab, setActiveTab] = useState<Tab>('tokens');
 
   const [showImport, setShowImport] = useState(false);
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
@@ -41,6 +45,7 @@ export function WalletPage() {
   };
 
   const handleUnlock = async () => {
+    console.log("🚀 ~ handleUnlock ~ passcode:", passcode)
     await unlockWallet(passcode);
   };
 
@@ -63,7 +68,7 @@ export function WalletPage() {
     }
   };
 
-  if (isUnlocked) {
+  if (!isUnlocked) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
         {!showImport ? (
@@ -148,9 +153,8 @@ export function WalletPage() {
                         <button
                           key={net.chainId}
                           onClick={() => handleNetworkSwitch(net.chainId)}
-                          className={`w-full text-left px-3 py-2 rounded hover:bg-gray-700 ${
-                            net.chainId === network.chainId ? 'bg-gray-700' : ''
-                          }`}
+                          className={`w-full text-left px-3 py-2 rounded hover:bg-gray-700 ${net.chainId === network.chainId ? 'bg-gray-700' : ''
+                            }`}
                         >
                           {net.name}
                         </button>
@@ -191,35 +195,41 @@ export function WalletPage() {
 
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex gap-8 mb-6">
-            <button className="text-blue-400 border-b-2 border-blue-400 pb-2">
+            <button onClick={() => setActiveTab('tokens')} className="text-blue-400 border-b-2 border-blue-400 pb-2">
               Tokens
             </button>
-            <button className="text-gray-400 pb-2">
+            <button onClick={() => setActiveTab('activity')} className="text-gray-400 pb-2">
               Activity
             </button>
           </div>
 
           <div className="space-y-4">
-            {data.filter(Boolean).map((token) => (
-              <div key={token?.address} className="flex items-center justify-between p-2 hover:bg-gray-700 rounded">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
-                  <div>
-                    <p className="font-medium">{token?.symbol}</p>
-                    <p className="text-sm text-gray-400">{token?.balance}</p>
+            {activeTab === 'tokens' && (
+              <>{data.filter(Boolean).map((token) => (
+                <div key={token?.address} className="flex items-center justify-between p-2 hover:bg-gray-700 rounded">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
+                    <div>
+                      <p className="font-medium">{token?.symbol}</p>
+                      <p className="text-sm text-gray-400">{token?.balance}</p>
+                    </div>
                   </div>
+                  <p className="font-medium">{token?.balance} {token?.symbol}</p>
                 </div>
-                <p className="font-medium">{token?.balance} {token?.symbol}</p>
-              </div>
-            ))}
+              ))}<button
+                onClick={() => setShowImportTokenModal(true)}
+                className="w-full mt-4 py-3 text-sm text-blue-400 border border-blue-400/30 rounded-lg hover:bg-blue-400/10 transition-colors flex items-center justify-center gap-2"
+              >
+                  <span className="material-icons-outlined text-sm">add_circle_outline</span>
+                  Import Token
+                </button></>
+            )}
 
-            <button
-              onClick={() => setShowImportTokenModal(true)}
-              className="w-full mt-4 py-3 text-sm text-blue-400 border border-blue-400/30 rounded-lg hover:bg-blue-400/10 transition-colors flex items-center justify-center gap-2"
-            >
-              <span className="material-icons-outlined text-sm">add_circle_outline</span>
-              Import Token
-            </button>
+            {activeTab === 'activity' && (
+              <Activity />
+            )}
+
+
           </div>
         </div>
       </div>

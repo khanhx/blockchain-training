@@ -1,5 +1,8 @@
+import { ERC20__factory } from '@client/typechain';
 import { Dialog } from '@headlessui/react';
 import { useState } from 'react';
+import { useWalletState } from '../contexts/state';
+import { ethers } from 'ethers';
 
 interface ImportTokenModalProps {
   isOpen: boolean;
@@ -8,8 +11,31 @@ interface ImportTokenModalProps {
 
 export function ImportTokenModal({ isOpen, onClose }: ImportTokenModalProps) {
   const [address, setAddress] = useState('');
+  const { provider, signer, set, importedToken } = useWalletState()
 
   const handleImport = async () => {
+    if (!provider) {
+      return;
+    }
+
+    const erc20Contract = ERC20__factory.connect(address, signer!);
+    const [name, symbol, decimals, balance] = await Promise.all([
+      erc20Contract.name(),
+      erc20Contract.symbol(),
+      erc20Contract.decimals(),
+      erc20Contract.balanceOf(signer!.address),
+    ]);
+
+    set({
+      importedToken: [...importedToken, {
+        address,
+        balance: ethers.formatUnits(balance, decimals),
+        name,
+        symbol,
+        decimals: Number(decimals),
+      }]
+    })
+    console.log(name, symbol, decimals);
   };
 
   return (
