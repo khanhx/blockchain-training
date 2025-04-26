@@ -33,6 +33,9 @@ async function main() {
   await marketPlaceContract.list(traning.target, 5, 200);
   await marketPlaceContract.list(traning.target, 6, 300);
 
+
+  await marketPlaceContract.connect(owner).cancelListing(traning.target, 4);
+
 }
 
 main().catch((error) => {

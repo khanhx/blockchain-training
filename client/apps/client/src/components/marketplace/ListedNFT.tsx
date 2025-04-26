@@ -1,14 +1,16 @@
-import React, { useState } from "react"
-import { ListedNFT as ListedNFTType, useListNFT } from "../../hooks/useNFT"
-import { NFTCard } from "../ui/NFTCard"
 import { ethers } from "ethers"
-import { Spinner } from "./spinner"
+import React, { useState } from "react"
+import { useAccount } from "wagmi"
+import { ListedNFT as ListedNFTType, useListNFT } from "../../hooks/useNFT"
 import { BuyNFTModal } from "../ui/BuyNFTModal"
+import { NFTCard } from "../ui/NFTCard"
+import { Spinner } from "./spinner"
 
 export const ListedNFT = () => {
-
+  const { address } = useAccount()
   const { data, isLoading, isError, fetchNextPage, hasNextPage } = useListNFT()
   const [selectedNFT, setSelectedNFT] = useState<ListedNFTType | null>(null)
+
   return (
     <>
     <section className="mb-12">
@@ -22,7 +24,8 @@ export const ListedNFT = () => {
                 tokenId={item.tokenId}
                 name={item.name}
                 nftAddress={item.contractAddress}
-                actionLabel={`${ethers.formatEther(item.price || '0')} ETH`}
+                seller={item.seller}
+                actionLabel={item.seller === address ? "Cancel" : `${ethers.formatEther(item.price || '0')} ETH`}
                 onAction={() => setSelectedNFT(item)}
               />
             ))}

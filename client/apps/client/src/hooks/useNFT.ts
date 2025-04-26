@@ -146,7 +146,7 @@ export const useListNFT = () => {
       const contract = MarketPlace__factory.connect(CONTRACT_ADDRESSES.MARKETPLACE_ADDRESS as `0x${string}`, provider as any)
 
       const result = await contract.getListingByPage(pageParam * 10, 10)
-      return result.map((item) => ({
+      return result.filter((item) => item.isActive).map((item) => ({
         id: `${item.nftAddress}-${item.tokenId}`,
         contractAddress: item.nftAddress,
         tokenId: item.tokenId.toString(),
@@ -163,5 +163,32 @@ export const useListNFT = () => {
     gcTime: 30_000,
     staleTime: 30_000,
     refetchInterval: 3000,
+  })
+}
+
+
+export const useMutateCancelListing = (contractAddress: string, tokenId: string) => {
+  const { data: walletClient } = useWalletClient()
+  const publicClient = usePublicClient()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!walletClient || !publicClient) return false
+
+      const provider = new ethers.BrowserProvider(walletClient.transport)
+      const contract = MarketPlace__factory.connect(CONTRACT_ADDRESSES.MARKETPLACE_ADDRESS as `0x${string}`, provider as any)
+
+      const tx = await walletClient.sendTransaction({
+        to: CONTRACT_ADDRESSES.MARKETPLACE_ADDRESS as `0x${string}`,
+        data: contract.interface.encodeFunctionData('cancelListing', [contractAddress, tokenId]) as `0x${string}`,
+      })
+
+      await publicClient.waitForTransactionReceipt({ hash: tx })
+      return tx
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['list-nft'] })
+    }
   })
 }

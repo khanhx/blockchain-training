@@ -10,10 +10,13 @@ contract MarketPlace  {
         uint256 tokenId;
         address seller;
         uint256 price;
+        bool isActive;
     }
 
     event NewListing(address indexed nftAddress, uint256 indexed tokenId, address indexed seller, uint256 price);
+    event ListingCancelled(address indexed nftAddress, uint256 indexed tokenId, address indexed seller);
 
+    mapping(address => mapping(uint256 => uint256)) private _listMaps;
     Listing[] public listings;
 
     function list(address nftAddress, uint256 tokenId, uint256 price) public {
@@ -21,8 +24,22 @@ contract MarketPlace  {
         require(IERC721(nftAddress).isApprovedForAll(msg.sender, address(this)) || IERC721(nftAddress).getApproved(tokenId) == address(this), "You must approve the marketplace to transfer the token");
 
         IERC721(nftAddress).transferFrom(msg.sender, address(this), tokenId);
-        listings.push(Listing({nftAddress: nftAddress, tokenId: tokenId, seller: msg.sender, price: price}));
+        Listing memory listing = Listing({nftAddress: nftAddress, tokenId: tokenId, seller: msg.sender, price: price, isActive: true});
+        listings.push(listing);
+
+        _listMaps[nftAddress][tokenId] = listings.length - 1;
         emit NewListing(nftAddress, tokenId, msg.sender, price);
+    }
+
+    function cancelListing(address nftAddress, uint256 tokenId) public {
+        uint256 index = _listMaps[nftAddress][tokenId];
+        Listing storage listing = listings[index];
+        require(listing.seller == msg.sender, "You are not the owner of the token");
+        require(listing.isActive, "Listing is not active");
+        IERC721(nftAddress).transferFrom(address(this), msg.sender, tokenId);
+
+        listing.isActive = false;
+        emit ListingCancelled(nftAddress, tokenId, msg.sender);
     }
 
     function getListingByPage(uint256 offset, uint256 limit) public view returns (Listing[] memory) {

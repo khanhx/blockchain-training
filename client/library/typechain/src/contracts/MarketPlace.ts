@@ -29,23 +29,37 @@ export declare namespace MarketPlace {
     tokenId: BigNumberish;
     seller: AddressLike;
     price: BigNumberish;
+    isActive: boolean;
   };
 
   export type ListingStructOutput = [
     nftAddress: string,
     tokenId: bigint,
     seller: string,
-    price: bigint
-  ] & { nftAddress: string; tokenId: bigint; seller: string; price: bigint };
+    price: bigint,
+    isActive: boolean
+  ] & {
+    nftAddress: string;
+    tokenId: bigint;
+    seller: string;
+    price: bigint;
+    isActive: boolean;
+  };
 }
 
 export interface MarketPlaceInterface extends Interface {
   getFunction(
-    nameOrSignature: "getListingByPage" | "list" | "listings"
+    nameOrSignature: "cancelListing" | "getListingByPage" | "list" | "listings"
   ): FunctionFragment;
 
-  getEvent(nameOrSignatureOrTopic: "NewListing"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "ListingCancelled" | "NewListing"
+  ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "cancelListing",
+    values: [AddressLike, BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "getListingByPage",
     values: [BigNumberish, BigNumberish]
@@ -60,11 +74,37 @@ export interface MarketPlaceInterface extends Interface {
   ): string;
 
   decodeFunctionResult(
+    functionFragment: "cancelListing",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getListingByPage",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "list", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "listings", data: BytesLike): Result;
+}
+
+export namespace ListingCancelledEvent {
+  export type InputTuple = [
+    nftAddress: AddressLike,
+    tokenId: BigNumberish,
+    seller: AddressLike
+  ];
+  export type OutputTuple = [
+    nftAddress: string,
+    tokenId: bigint,
+    seller: string
+  ];
+  export interface OutputObject {
+    nftAddress: string;
+    tokenId: bigint;
+    seller: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace NewListingEvent {
@@ -135,6 +175,12 @@ export interface MarketPlace extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  cancelListing: TypedContractMethod<
+    [nftAddress: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   getListingByPage: TypedContractMethod<
     [offset: BigNumberish, limit: BigNumberish],
     [MarketPlace.ListingStructOutput[]],
@@ -150,11 +196,12 @@ export interface MarketPlace extends BaseContract {
   listings: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, bigint, string, bigint] & {
+      [string, bigint, string, bigint, boolean] & {
         nftAddress: string;
         tokenId: bigint;
         seller: string;
         price: bigint;
+        isActive: boolean;
       }
     ],
     "view"
@@ -164,6 +211,13 @@ export interface MarketPlace extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "cancelListing"
+  ): TypedContractMethod<
+    [nftAddress: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "getListingByPage"
   ): TypedContractMethod<
@@ -183,16 +237,24 @@ export interface MarketPlace extends BaseContract {
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, bigint, string, bigint] & {
+      [string, bigint, string, bigint, boolean] & {
         nftAddress: string;
         tokenId: bigint;
         seller: string;
         price: bigint;
+        isActive: boolean;
       }
     ],
     "view"
   >;
 
+  getEvent(
+    key: "ListingCancelled"
+  ): TypedContractEvent<
+    ListingCancelledEvent.InputTuple,
+    ListingCancelledEvent.OutputTuple,
+    ListingCancelledEvent.OutputObject
+  >;
   getEvent(
     key: "NewListing"
   ): TypedContractEvent<
@@ -202,6 +264,17 @@ export interface MarketPlace extends BaseContract {
   >;
 
   filters: {
+    "ListingCancelled(address,uint256,address)": TypedContractEvent<
+      ListingCancelledEvent.InputTuple,
+      ListingCancelledEvent.OutputTuple,
+      ListingCancelledEvent.OutputObject
+    >;
+    ListingCancelled: TypedContractEvent<
+      ListingCancelledEvent.InputTuple,
+      ListingCancelledEvent.OutputTuple,
+      ListingCancelledEvent.OutputObject
+    >;
+
     "NewListing(address,uint256,address,uint256)": TypedContractEvent<
       NewListingEvent.InputTuple,
       NewListingEvent.OutputTuple,

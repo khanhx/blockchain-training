@@ -1,4 +1,7 @@
 import { formatEther } from 'ethers'
+import { useCallback } from 'react'
+import { useAccount } from 'wagmi'
+import { useMutateCancelListing } from '../../hooks/useNFT'
 import { NFTImage } from './NFTImage'
 
 interface NFTCardProps {
@@ -20,6 +23,15 @@ export function NFTCard({
   onAction,
   actionLabel,
 }: NFTCardProps) {
+  const { address } = useAccount()
+  const { mutate: cancelListing } = useMutateCancelListing(nftAddress!, tokenId)
+  const handleAction = useCallback(() => {
+    if (seller === address) {
+      cancelListing()
+    } else {
+      onAction?.()
+    }
+  }, [address, seller, cancelListing, onAction])
   const formattedPrice = price ? formatEther(price.toString()) : null
 
   return (
@@ -47,7 +59,7 @@ export function NFTCard({
           )}
           {onAction && actionLabel && (
             <button
-              onClick={onAction}
+              onClick={handleAction}
               className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               {actionLabel}
